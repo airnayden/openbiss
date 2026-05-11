@@ -1,93 +1,231 @@
 # OpenBISS
 
+Open-source replacement for BORICA's BISS (Browser Independent Signing Service) written in Go.
 
+BISS is a closed-source Java application used in Bulgaria's health system (НЗИС), e-prescriptions, and dental reporting. It runs as a local HTTPS server on ports 53952–53955 and enables browsers to sign documents using smart cards (КЕП / qualified electronic signatures) via PKCS#11.
 
-## Getting started
+## Why OpenBISS?
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.com/project-foundation/tools/openbiss.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-* [Set up project integrations](https://gitlab.com/project-foundation/tools/openbiss/-/settings/integrations)
-
-## Collaborate with your team
-
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+| | BISS | OpenBISS |
+|---|---|---|
+| Size | 200 MB+ (JRE bundled) | ~8 MB single binary |
+| Source | Closed / ProGuard obfuscated | Open source (MIT) |
+| Trust store | B-Trust CA only | OS trust store (macOS Keychain / Windows CertStore / Linux CA bundle) |
+| PKCS#11 libs | Hardcoded | Auto-discovered + `OPENBISS_PKCS11_LIB` override |
+| Languages | Bulgarian only | English + Bulgarian (auto-detect + override) |
+| PIN logging | Unknown | Never logged or stored |
+| GUI | Limited Java UI | Full native Fyne desktop app (5 tabs + system tray) |
 
 ## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+
+### macOS / Linux
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/openbiss/openbiss/main/tools/openbiss/scripts/install.sh | bash
+```
+
+Or manually:
+
+```bash
+# Build from source
+cd tools/openbiss
+make build-darwin        # Intel Mac
+make build-darwin-arm    # Apple Silicon
+make build-linux         # Linux x86-64
+
+# Copy to PATH
+cp dist/openbiss-darwin-arm64 /usr/local/bin/openbiss
+chmod +x /usr/local/bin/openbiss
+```
+
+### Windows
+
+```powershell
+# Build from source
+cd tools\openbiss
+make build-windows
+
+# Run
+.\dist\openbiss-windows-amd64.exe
+```
+
+### Security Warnings (Unsigned Binaries)
+
+Pre-built binaries are not code-signed. Your OS will warn you on first launch.
+
+**macOS (Gatekeeper):** Right-click the binary in Finder and choose **Open**, then confirm in the dialog. Alternatively, from Terminal:
+
+```bash
+xattr -d com.apple.quarantine ./openbiss
+```
+
+**Windows (SmartScreen):** Click **More info** in the SmartScreen dialog, then **Run anyway**.
+
+See [docs/SECURITY-WARNINGS.md](docs/SECURITY-WARNINGS.md) for a full explanation of why these warnings appear and what they mean.
 
 ## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+```bash
+openbiss
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+OpenBISS auto-selects the first available port from 53952–53955 and prints the URL:
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```
+INFO OpenBISS listening addr=https://127.0.0.1:53952
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+On first run a self-signed TLS certificate is generated and stored in `~/.openbiss/` (macOS/Linux) or `%APPDATA%\OpenBISS\` (Windows).
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### Command-Line Flags
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+| Flag | Default | Description |
+|---|---|---|
+| `--lang` | _(auto-detect)_ | UI language: `en` or `bg`. Overrides `OPENBISS_LANG` and OS locale. |
+| `--headless` | `false` | Run as a background server without any GUI. |
+
+### Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `OPENBISS_PKCS11_LIB` | _(auto-discover)_ | Path to PKCS#11 shared library |
+| `OPENBISS_DATA_DIR` | `~/.openbiss` | Directory for TLS cert storage |
+| `OPENBISS_LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error` |
+| `OPENBISS_LANG` | _(auto-detect)_ | UI language: `en` or `bg` (overrides OS locale) |
+
+### Language Selection
+
+OpenBISS supports English (`en`) and Bulgarian (`bg`) for logs, PIN prompts, certificate selection dialogs, and error messages. The language is resolved in this order:
+
+1. `--lang` CLI flag
+2. `OPENBISS_LANG` environment variable
+3. OS locale (macOS `AppleLocale`, Windows culture, Linux `LANG`)
+4. English fallback
+
+```bash
+# macOS / Linux
+openbiss --lang bg
+OPENBISS_LANG=bg openbiss
+
+# Windows (PowerShell)
+.\openbiss.exe --lang bg
+$env:OPENBISS_LANG="bg"; .\openbiss.exe
+```
+
+### Supported Smart Card Middleware
+
+OpenBISS auto-discovers these libraries (platform-specific):
+
+- **SafeNet/Thales eToken** (`libIDPrimePKCS11.dylib` / `eTPKCS11.dll`)  
+- **OpenSC** (`opensc-pkcs11.so` / `opensc-pkcs11.dll`)
+
+To use a different library:
+
+```bash
+OPENBISS_PKCS11_LIB=/path/to/your-pkcs11.so openbiss
+```
+
+## Desktop GUI
+
+OpenBISS ships as a full desktop app with a system tray icon, a 5-tab window (Status, Settings, Logs, Certificates, About), and an in-app first-run wizard.
+
+Screenshots: [`./docs/screenshots/`](docs/screenshots/)
+
+### Launch
+
+```bash
+./openbiss
+```
+
+Opens the main window. The server starts automatically in the background. On first launch, a wizard confirms your language preference and detects your smart card reader.
+
+### Window Tabs
+
+| Tab | What it shows |
+|---|---|
+| **Status** | Server state, port, uptime, and detected certificate count (refreshes every second) |
+| **Settings** | Language, log level, PKCS#11 library path, data directory, autostart toggle, TLS regeneration |
+| **Logs** | Live scrolling log viewer with Clear button (ring buffer, last 1000 entries) |
+| **Certificates** | Smart card certificates with CN, issuer, and expiry date; Refresh button |
+| **About** | Version, bundle ID, GitHub link, license, and known-behavior disclosures |
+
+### System Tray
+
+The close button (×) minimizes to tray rather than quitting. Right-click the tray icon for:
+
+- **Show OpenBISS** / **Hide OpenBISS**
+- **Quit** — stops the server and exits
+
+On Linux desktops without a StatusNotifier-compatible tray (e.g., plain GNOME without the AppIndicator extension), the close button quits directly instead.
+
+### Headless / CLI Mode
+
+```bash
+./openbiss --headless
+```
+
+Runs as a background server without any GUI. Ideal for SSH sessions, CI pipelines, or when using the macOS launchd / Linux systemd service installed by `install.sh`. All existing behavior is preserved; native OS dialogs handle PIN prompts and certificate selection.
+
+### Autostart on Login
+
+Open **Settings** and toggle **Start at login**. This creates:
+
+- macOS: a LaunchAgent plist at `~/Library/LaunchAgents/com.openbiss.openbiss.plist`
+- Windows: a `HKCU\...\Run\OpenBISS` registry entry
+- Linux: an XDG autostart `.desktop` file at `~/.config/autostart/openbiss.desktop`
+
+The autostart entry launches OpenBISS in GUI mode so the tray icon appears at login.
+
+## API Compatibility
+
+OpenBISS implements the full BISS HTTP API:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/version` | GET | Capability document |
+| `/getsigner` | POST | List certs, show selection dialog |
+| `/sign` | POST | Sign content with smart card |
+
+### Key Difference from BISS
+
+The `/sign` endpoint validates `signedContentsCert` against the **OS trust store** rather than BISS's custom B-Trust-only trust store. This means:
+
+- ✅ Certificates signed by any trusted CA (Let's Encrypt, DigiCert, etc.) are accepted
+- ✅ Enterprise internal CAs trusted by the OS are accepted  
+- ❌ Certificates NOT trusted by the OS are rejected (prevents MITM)
+
+## Building
+
+```bash
+cd tools/openbiss
+make build-all    # all platforms
+make build        # current platform
+make vet          # go vet
+```
+
+## Building Release Bundles
+
+Release bundles (macOS `.app`, Windows `.exe` with icon, Linux tarball) are built with [fyne-cross](https://github.com/fyne-io/fyne-cross), which requires Docker.
+
+```bash
+# Install fyne-cross (once)
+go install github.com/fyne-io/fyne-cross@latest
+
+# Build all platform bundles
+make package-all
+```
+
+`make package-all` produces:
+
+| Output | Platform |
+|---|---|
+| `dist/OpenBISS-darwin-amd64.app` | macOS Intel |
+| `dist/OpenBISS-darwin-arm64.app` | macOS Apple Silicon |
+| `dist/OpenBISS-windows-amd64.exe` | Windows x86-64 |
+| `dist/openbiss-linux-amd64.tar.gz` | Linux x86-64 |
+
+Bundles embed the app icon (`assets/icon.png`) and `FyneApp.toml` metadata. They are **not code-signed**. See [docs/SECURITY-WARNINGS.md](docs/SECURITY-WARNINGS.md) for Gatekeeper and SmartScreen bypass instructions.
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+MIT

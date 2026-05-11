@@ -1,0 +1,6 @@
+[Details]
+Icon = "assets/icon.png"
+Name = "OpenBISS"
+ID = "com.openbiss.openbiss"
+Version = "1.0.0"
+Build = 1

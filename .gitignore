@@ -1,0 +1,22 @@
+# Compiled binaries
+openbiss
+openbiss.exe
+*.exe
+*.test
+*.out
+
+# Build output directory (populated by `make build-*`)
+/dist/
+
+# Go workspace & module cache artifacts
+/vendor/
+
+# Editor / OS cruft
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Generated icon containers (produced by `fyne package` from assets/icon.png)
+assets/*.icns
+assets/*.ico
