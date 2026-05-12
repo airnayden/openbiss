@@ -183,7 +183,7 @@ Closing the window quits OpenBISS (the local HTTPS server stops along with the a
 | Tab | What it shows |
 |---|---|
 | **Status** | Server state (Running/Stopped), port, PKCS#11 driver, certificate count, uptime, and Start/Stop server buttons |
-| **API** | Per-endpoint request counters (Version / GetSigner / Sign), success rate, and a scrollable recent-requests list |
+| **API** | Per-endpoint request counters (Version / GetSigner / Sign), success rate, and a scrollable recent-requests list; includes an **Open API Documentation** button that opens an interactive Swagger UI at `https://127.0.0.1:<port>/docs` (vendored, works offline) |
 | **Settings** | Language, log level, PKCS#11 library path, autostart toggle, and TLS certificate regeneration |
 | **Logs** | Live scrolling log viewer with Clear button (ring buffer, last 1000 entries) |
 | **Certificates** | Smart card certificates with CN, issuer, and expiry date; Refresh button |
@@ -216,6 +216,8 @@ OpenBISS implements the full BISS HTTP API:
 | `/version` | GET | Capability document |
 | `/getsigner` | POST | List certs, show selection dialog |
 | `/sign` | POST | Sign content with smart card |
+
+A machine-readable OpenAPI 3.0 specification is available at `https://127.0.0.1:<port>/openapi.json`. An interactive Swagger UI is served at `https://127.0.0.1:<port>/docs`. Both are vendored into the binary so they work without internet access.
 
 ### Key Difference from BISS
 
