@@ -107,11 +107,7 @@
   "ui.certs.column.expires": "Expires",
   "ui.about.version": "Version: %s",
   "ui.about.bundleid": "Bundle: %s",
-  "ui.about.github": "GitHub repository",
-  "ui.about.license": "License: MIT",
-  "ui.about.behaviors.title": "Known behaviors",
-  "ui.about.behaviors.pincancel": "Cancelling the PIN dialog discards the result locally; the smart card may still complete the operation briefly.",
-  "ui.about.behaviors.unsigned": "This build is not code-signed. See SECURITY-WARNINGS.md for Gatekeeper/SmartScreen bypass.",
+  "ui.about.author": "Author: %s",
   "ui.wizard.welcome": "Welcome to OpenBISS",
   "ui.wizard.lang.prompt": "Choose your preferred language:",
   "ui.wizard.detect": "Detecting smart card reader\u2026",
@@ -136,5 +132,6 @@
   "ui.api.success": "Success",
   "ui.api.successrate": "Success rate: %d%%",
   "ui.api.time": "Time",
-  "ui.api.total": "Total"
+  "ui.api.total": "Total",
+  "ui.api.open_docs": "Open API Documentation"
 }
