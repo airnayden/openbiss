@@ -1,8 +1,6 @@
 package screens
 
 import (
-	"net/url"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -13,14 +11,14 @@ import (
 )
 
 const (
-	aboutGitHubURL = "https://github.com/openbiss/openbiss"
-	aboutBundleID  = "com.openbiss.openbiss"
-	aboutIconSize  = 128
+	aboutBundleID = "com.openbiss.openbiss"
+	aboutAuthor   = "Nayden Panchev"
+	aboutIconSize = 128
 )
 
 // NewAboutScreen returns the content widget for the About tab: a fully
 // static panel with the application icon, version, bundle identifier,
-// GitHub link, license, and a "Known behaviors" disclosure section.
+// and author.
 //
 // Static by design — no goroutines, no timers, no network calls. Opening
 // this tab MUST NOT trigger any outbound traffic (no update probe, no
@@ -43,40 +41,17 @@ func NewAboutScreen(version string) fyne.CanvasObject {
 		fyne.TextAlignCenter,
 		fyne.TextStyle{},
 	)
-	licenseLabel := widget.NewLabelWithStyle(
-		i18n.T("ui.about.license"),
+	authorLabel := widget.NewLabelWithStyle(
+		i18n.T("ui.about.author", aboutAuthor),
 		fyne.TextAlignCenter,
 		fyne.TextStyle{},
 	)
-
-	// url.Parse on a compile-time constant URL cannot fail; the
-	// discarded error is intentional.
-	gitHubURL, _ := url.Parse(aboutGitHubURL)
-	gitHubLink := widget.NewHyperlink(i18n.T("ui.about.github"), gitHubURL)
-	gitHubLink.Alignment = fyne.TextAlignCenter
-
-	behaviorsHeading := widget.NewLabelWithStyle(
-		i18n.T("ui.about.behaviors.title"),
-		fyne.TextAlignCenter,
-		fyne.TextStyle{Bold: true},
-	)
-
-	pinCancelLabel := widget.NewLabel(i18n.T("ui.about.behaviors.pincancel"))
-	pinCancelLabel.Wrapping = fyne.TextWrapWord
-
-	unsignedLabel := widget.NewLabel(i18n.T("ui.about.behaviors.unsigned"))
-	unsignedLabel.Wrapping = fyne.TextWrapWord
 
 	content := container.NewVBox(
 		container.NewCenter(icon),
 		versionLabel,
 		bundleLabel,
-		container.NewCenter(gitHubLink),
-		licenseLabel,
-		widget.NewSeparator(),
-		behaviorsHeading,
-		pinCancelLabel,
-		unsignedLabel,
+		authorLabel,
 	)
 	return container.NewPadded(content)
 }
