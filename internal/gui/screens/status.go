@@ -23,6 +23,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/openbiss/openbiss/internal/i18n"
@@ -34,19 +35,22 @@ const (
 	certCountPollInterval = 30 * time.Second
 )
 
-// NewStatusScreen returns the content widget for the Status tab: a live
-// view of server state, listening port, PKCS#11 driver path, certificate
-// count, and uptime.
-//
-// A background goroutine polls srv at 1 Hz and calls widget.SetText only
-// when a value differs from the previous tick. A second, slower goroutine
-// samples Driver.ListCertificates every 30 s so smart-card I/O never
-// blocks the 1 Hz UI refresh.
-//
-// A nil srv yields a single placeholder label so the screen still renders
-// in scenarios where main.go has not yet wired the server (test harnesses,
-// layout debugging).
-func NewStatusScreen(srv *server.Server) fyne.CanvasObject {
+// StatusHost is the dependency contract the Status screen needs from the
+// owning App. Defined here (not in internal/gui) to avoid an import cycle.
+// *gui.App satisfies it via structural typing.
+type StatusHost interface {
+	Server() *server.Server
+	StartServer() error
+	StopServer()
+	IsServerRunning() bool
+	MainWindow() fyne.Window
+}
+
+func NewStatusScreen(host StatusHost) fyne.CanvasObject {
+	if host == nil {
+		return container.NewPadded(widget.NewLabel(i18n.T("ui.status.stopped")))
+	}
+	srv := host.Server()
 	if srv == nil {
 		return container.NewPadded(widget.NewLabel(i18n.T("ui.status.stopped")))
 	}
@@ -57,11 +61,35 @@ func NewStatusScreen(srv *server.Server) fyne.CanvasObject {
 	certCountLabel := widget.NewLabel("")
 	uptimeLabel := widget.NewLabel("")
 
+	startBtn := widget.NewButton(i18n.T("ui.status.start"), func() {
+		if err := host.StartServer(); err != nil {
+			slog.Error("status: start failed", "error", err)
+		}
+	})
+	startBtn.Importance = widget.HighImportance
+
+	stopBtn := widget.NewButton(i18n.T("ui.status.stop"), func() {
+		dialog.ShowConfirm(
+			i18n.T("ui.status.stop"),
+			i18n.T("ui.status.stop.confirm"),
+			func(ok bool) {
+				if !ok {
+					return
+				}
+				go host.StopServer()
+			},
+			host.MainWindow(),
+		)
+	})
+	stopBtn.Importance = widget.DangerImportance
+
 	var certCount atomic.Int32
 
 	var prev struct {
 		state, port, driver, certCount, uptime string
 	}
+	prevStartEnabled := true
+	prevStopEnabled := true
 
 	refresh := func() {
 		nextState := i18n.T(stateKey(srv.State()))
@@ -69,6 +97,10 @@ func NewStatusScreen(srv *server.Server) fyne.CanvasObject {
 		nextDriver := driverText(srv)
 		nextCertCount := i18n.T("ui.status.certcount", int(certCount.Load()))
 		nextUptime := i18n.T("ui.status.uptime", formatUptime(srv.Uptime()))
+
+		running := host.IsServerRunning()
+		wantStartEnabled := !running
+		wantStopEnabled := running
 
 		var changes []func()
 
@@ -96,6 +128,28 @@ func NewStatusScreen(srv *server.Server) fyne.CanvasObject {
 			prev.uptime = nextUptime
 			v := nextUptime
 			changes = append(changes, func() { uptimeLabel.SetText(v) })
+		}
+		if wantStartEnabled != prevStartEnabled {
+			prevStartEnabled = wantStartEnabled
+			want := wantStartEnabled
+			changes = append(changes, func() {
+				if want {
+					startBtn.Enable()
+				} else {
+					startBtn.Disable()
+				}
+			})
+		}
+		if wantStopEnabled != prevStopEnabled {
+			prevStopEnabled = wantStopEnabled
+			want := wantStopEnabled
+			changes = append(changes, func() {
+				if want {
+					stopBtn.Enable()
+				} else {
+					stopBtn.Disable()
+				}
+			})
 		}
 
 		if len(changes) == 0 {
@@ -128,7 +182,10 @@ func NewStatusScreen(srv *server.Server) fyne.CanvasObject {
 		}
 	}()
 
+	buttonRow := container.NewHBox(startBtn, stopBtn)
 	rows := container.NewVBox(
+		buttonRow,
+		widget.NewSeparator(),
 		stateLabel,
 		widget.NewSeparator(),
 		portLabel,

@@ -85,9 +85,17 @@ func NewLogScreen(tap *logging.Tap) fyne.CanvasObject {
 		})
 	}
 
-	render()
-
+	// NewLogScreen is called before fyneApp.Run() starts the event loop.
+	// Calling render() (or consuming a buffered wake) here causes fyne.Do to
+	// run inline on this goroutine instead of the Fyne main goroutine, which
+	// trips the threading check and creates a cascading error storm.
+	// Drain the pre-event-loop wake signal (capacity 1) and then block; the
+	// for-range only fires after Run() is dispatching closures correctly.
 	go func() {
+		select {
+		case <-wake:
+		default:
+		}
 		for range wake {
 			render()
 		}
