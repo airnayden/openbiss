@@ -14,9 +14,7 @@ var defaultWindowSize = fyne.NewSize(800, 600)
 
 // BuildMainWindow constructs the main settings/status window with the
 // five-tab layout (Status, Settings, Logs, Certificates, About), stores
-// it on the App, and calls Show() so the window appears once the Fyne
-// event loop starts. The close button is intercepted by BuildTray to
-// hide-to-tray instead of quit (when tray is available).
+// it on the App, shows it, and wires the close button to quit the app.
 func (a *App) BuildMainWindow() fyne.Window {
 	w := a.fyneApp.NewWindow(i18n.T("ui.window.title"))
 	w.Resize(defaultWindowSize)
@@ -24,12 +22,14 @@ func (a *App) BuildMainWindow() fyne.Window {
 	w.SetContent(a.buildTabs())
 	a.window = w
 	w.Show()
+	w.SetCloseIntercept(func() { a.fyneApp.Quit() })
 	return w
 }
 
 func (a *App) buildTabs() *container.AppTabs {
 	return container.NewAppTabs(
-		container.NewTabItemWithIcon(i18n.T("ui.tab.status"), theme.HomeIcon(), screens.NewStatusScreen(a.srv)),
+		container.NewTabItemWithIcon(i18n.T("ui.tab.status"), theme.HomeIcon(), screens.NewStatusScreen(a)),
+		container.NewTabItemWithIcon(i18n.T("ui.tab.api"), theme.MailComposeIcon(), screens.NewAPIScreen(a.srv)),
 		container.NewTabItemWithIcon(i18n.T("ui.tab.settings"), theme.SettingsIcon(), screens.NewSettingsScreen(a)),
 		container.NewTabItemWithIcon(i18n.T("ui.tab.logs"), theme.DocumentIcon(), screens.NewLogScreen(a.tap)),
 		container.NewTabItemWithIcon(i18n.T("ui.tab.certs"), theme.AccountIcon(), screens.NewCertScreen(a.srv)),
