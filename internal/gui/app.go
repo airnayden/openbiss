@@ -1,5 +1,5 @@
 // Package gui provides the Fyne-based desktop GUI for OpenBISS: the
-// tray-resident application that hosts the HTTPS signing server, a main
+// desktop application that hosts the HTTPS signing server, a main
 // settings window, a first-run wizard, and the PIN/certificate dialogs.
 //
 // This package is imported only from the GUI code path; headless / CLI
@@ -8,6 +8,12 @@
 package gui
 
 import (
+	"context"
+	"errors"
+	"log/slog"
+	"sync"
+	"time"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 
@@ -24,19 +30,20 @@ const AppID = "com.openbiss.openbiss"
 
 // App is the OpenBISS Fyne GUI root. It owns the Fyne app handle and the
 // main window, and holds a reference to the loaded config so downstream
-// screens (wizard, settings, tray) can resolve paths without re-loading.
+// screens (wizard, settings) can resolve paths without re-loading.
 //
-// The App does NOT own the server.Server lifecycle — main.go (T18) starts
-// and stops the server. App holds a reference (set via SetServer) so the
-// Status screen and other read-only views can poll the server's atomic
-// state, port, driver, and uptime at 1 Hz.
+// App owns the server lifecycle via StartServer / StopServer so the Status
+// screen can start and stop the server through the StatusHost interface
+// without importing internal/gui (which would create an import cycle).
 type App struct {
 	fyneApp fyne.App
 	window  fyne.Window
 	cfg     *config.Config
 	srv     *server.Server
 	tap     *logging.Tap
-	useTray bool
+
+	serverMu     sync.Mutex
+	serverCancel context.CancelFunc // nil when stopped
 }
 
 // New constructs the Fyne application, sets the app icon from the embedded
@@ -101,4 +108,63 @@ func (a *App) SetTap(tap *logging.Tap) {
 // yet been called.
 func (a *App) Tap() *logging.Tap {
 	return a.tap
+}
+
+// StartServer starts the server in a background goroutine. Idempotent:
+// calling while already running is a no-op and returns nil.
+func (a *App) StartServer() error {
+	if a.srv == nil {
+		return errors.New("server not wired into App")
+	}
+	a.serverMu.Lock()
+	if a.serverCancel != nil {
+		a.serverMu.Unlock()
+		return nil
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	a.serverCancel = cancel
+	a.serverMu.Unlock()
+
+	go func() {
+		if err := a.srv.Start(ctx); err != nil {
+			slog.Error("server: start returned error", "error", err)
+		}
+		a.serverMu.Lock()
+		a.serverCancel = nil
+		a.serverMu.Unlock()
+	}()
+	return nil
+}
+
+// StopServer requests a graceful shutdown. Idempotent: no-op when already
+// stopped. Blocks until StateStopped or a 6-second timeout elapses.
+func (a *App) StopServer() {
+	a.serverMu.Lock()
+	cancel := a.serverCancel
+	a.serverCancel = nil
+	a.serverMu.Unlock()
+	if cancel == nil {
+		return
+	}
+	cancel()
+	if a.srv == nil {
+		return
+	}
+	deadline := time.Now().Add(6 * time.Second)
+	for time.Now().Before(deadline) {
+		if a.srv.State() == server.StateStopped {
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+// IsServerRunning reports whether the server is in a non-stopped state
+// (Starting, Running, or Stopping). Used by the Status screen to
+// enable/disable Start/Stop buttons.
+func (a *App) IsServerRunning() bool {
+	if a.srv == nil {
+		return false
+	}
+	return a.srv.State() != server.StateStopped
 }
