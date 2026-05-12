@@ -16,7 +16,45 @@ BISS is a closed-source Java application used in Bulgaria's health system (НЗ�
 | PIN logging | Unknown | Never logged or stored |
 | GUI | Limited Java UI | Full native Fyne desktop app (5 tabs + system tray) |
 
-## Installation
+## Install (one command)
+
+### macOS
+
+```bash
+git clone https://github.com/openbiss/openbiss.git && cd openbiss
+./scripts/install-macos.sh --user    # installs to ~/Applications
+# or: ./scripts/install-macos.sh    # installs to /Applications (may prompt for sudo)
+```
+
+Launch from Launchpad, or run `open ~/Applications/OpenBISS.app`. First launch
+asks for your password once to trust the local TLS certificate.
+
+### Linux
+
+```bash
+git clone https://github.com/openbiss/openbiss.git && cd openbiss
+./scripts/install-linux.sh           # installs to ~/.local
+# or: ./scripts/install-linux.sh --system    # installs to /usr/local (requires sudo)
+```
+
+Launch from your application menu (search "OpenBISS") or run `openbiss` in a terminal.
+On bare GNOME the tray icon requires the AppIndicator extension.
+
+### Windows
+
+```powershell
+git clone https://github.com/openbiss/openbiss.git
+cd openbiss
+.\scripts\install-windows.ps1
+```
+
+Launch from Start Menu (search "OpenBISS"). First launch shows a SmartScreen
+warning — click "More info" → "Run anyway". See `docs/SECURITY-WARNINGS.md`.
+
+**Uninstall any platform** with the same script and `--uninstall` (or `-Uninstall` on Windows).
+Your config and TLS certificate in `~/.openbiss` (`%APPDATA%\OpenBISS` on Windows) are preserved.
+
+## Manual Installation
 
 ### macOS / Linux
 
