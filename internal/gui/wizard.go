@@ -134,6 +134,7 @@ func (a *App) showWizard() {
 		_ = a.cfg.Save()
 		i18n.Init(a.cfg.Lang)
 		a.RebuildContent()
+		a.window.Show()
 		d.Hide()
 	})
 	finishBtn.Importance = widget.HighImportance
@@ -187,6 +188,7 @@ func (a *App) showWizard() {
 			return
 		}
 		_ = a.cfg.Save()
+		a.window.Show()
 		a.ShowToast(i18n.T("ui.wizard.cancel.toast"))
 	})
 

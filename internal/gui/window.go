@@ -13,16 +13,17 @@ import (
 var defaultWindowSize = fyne.NewSize(800, 600)
 
 // BuildMainWindow constructs the main settings/status window with the
-// five-tab layout (Status, Settings, Logs, Certificates, About) and
-// stores it on the App. The window is NOT shown; callers invoke Show()
-// when needed (tray click, wizard finish, etc.). Tab content is
-// placeholder widget.Label here; real screens are wired in T19–T23.
+// five-tab layout (Status, Settings, Logs, Certificates, About), stores
+// it on the App, and calls Show() so the window appears once the Fyne
+// event loop starts. The close button is intercepted by BuildTray to
+// hide-to-tray instead of quit (when tray is available).
 func (a *App) BuildMainWindow() fyne.Window {
 	w := a.fyneApp.NewWindow(i18n.T("ui.window.title"))
 	w.Resize(defaultWindowSize)
 	w.CenterOnScreen()
 	w.SetContent(a.buildTabs())
 	a.window = w
+	w.Show()
 	return w
 }
 
