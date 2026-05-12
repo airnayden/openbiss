@@ -34,10 +34,10 @@ func NewLogScreen(tap *logging.Tap) fyne.CanvasObject {
 
 	wake, snap := tap.Subscribe()
 
-	logEntry := widget.NewMultiLineEntry()
-	logEntry.TextStyle = fyne.TextStyle{Monospace: true}
-	logEntry.Wrapping = fyne.TextWrapOff
-	logEntry.Disable()
+	// TextGrid is Fyne's read-only monospaced display widget. It renders
+	// at full contrast (unlike a disabled MultiLineEntry which the theme
+	// fades to ~50% opacity) and supports text selection for copying.
+	logEntry := widget.NewTextGrid()
 
 	scroll := container.NewScroll(logEntry)
 
