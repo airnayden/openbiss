@@ -1,0 +1,436 @@
+openapi: 3.0.3
+info:
+  title: OpenBISS API
+  description: |
+    OpenBISS implements the BORICA BISS HTTP API for browser-based smart-card
+    signing (qualified electronic signatures via PKCS#11).
+
+    This is the same API used by Bulgaria's health system (НЗИС),
+    e-prescription portals, and dental reporting tools. OpenBISS is a
+    drop-in open-source replacement for the BORICA BISS Java application.
+
+    The server runs locally on https://127.0.0.1:53952-53955 and is
+    discovered by browsers via port scanning across that range.
+  version: "1.0"
+  contact:
+    name: Nayden Panchev
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://127.0.0.1:53952
+    description: OpenBISS localhost (auto-selects from ports 53952-53955)
+
+paths:
+  /version:
+    get:
+      summary: Server capability document
+      description: |
+        Returns version and capability flags. Browsers use this endpoint to
+        discover that OpenBISS is running and to confirm supported features.
+      tags:
+        - BISS
+      responses:
+        '200':
+          description: Capability document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+              example:
+                version: "1.0"
+                httpMethods: "GET, POST"
+                contentTypes: "data, digest"
+                signatureTypes: "signature"
+                selectorAvailable: true
+                hashAlgorithms: "SHA1, SHA256, SHA384, SHA512"
+        '405':
+          description: Method not allowed (only GET is accepted)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /getsigner:
+    post:
+      summary: List certificates on inserted smart card and let the user pick one
+      description: |
+        Enumerates the X.509 certificates on the inserted smart card via PKCS#11.
+        If multiple certificates are present, shows a native OS dialog (macOS
+        osascript, Windows PowerShell, Linux zenity, or in-app Fyne dialog in
+        GUI mode) for the user to pick one. Returns the chosen certificate's
+        metadata and DER encoding as a base64 chain.
+      tags:
+        - BISS
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSignerRequest'
+            example:
+              selector: {}
+              showValidCerts: true
+      responses:
+        '200':
+          description: Chosen certificate and its chain
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSignerResponse'
+              example:
+                status: "ok"
+                reasonCode: "200"
+                reasonText: "Success"
+                chain:
+                  - "MIIBxTCCAW+gAwIBAgIJAExampleCertBase64..."
+        '400':
+          description: Invalid JSON request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '405':
+          description: Method not allowed (only POST is accepted)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: PKCS#11 driver error or certificate selection failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: No PKCS#11 driver available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /sign:
+    post:
+      summary: Sign content with smart card
+      description: |
+        Validates the signedContents authorisation proof, locates the matching
+        private key on the smart card, prompts the user for their PIN, and
+        produces signatures of the supplied content array using
+        CKM_SHA256_RSA_PKCS. Returns the signature(s) as base64-encoded byte
+        arrays.
+
+        The signedContents field is an optional anti-replay mechanism: when
+        present, each entry must be a CMS/PKCS#7 signature over the
+        corresponding contents item, signed by a certificate trusted by the
+        OS trust store.
+      tags:
+        - BISS
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignRequest'
+            example:
+              version: "1.0"
+              signerCertificateB64: "MIIBxTCCAW+gAwIBAgIJAExampleCertBase64..."
+              contents:
+                - "SGVsbG8gV29ybGQ="
+              signedContents: []
+              signedContentsCert: []
+              contentType: "data"
+              hashAlgorithm: "SHA256"
+              signatureType: "signature"
+              confirmText:
+                - "Sign this document?"
+      responses:
+        '200':
+          description: Signatures produced successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignResponse'
+              example:
+                status: "ok"
+                reasonCode: "200"
+                signatures:
+                  - "MEUCIQDExampleSignatureBase64..."
+                signatureType: "signature"
+                signatureAlgorithm: "SHA256withRSA"
+        '400':
+          description: Invalid request body, missing required fields, or signedContents validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: User cancelled the PIN prompt, PIN was wrong, or signedContents authorisation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Signer certificate not found on the smart card
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '405':
+          description: Method not allowed (only POST is accepted)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: PKCS#11 signing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: No PKCS#11 driver available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /openapi.json:
+    get:
+      summary: OpenAPI 3.0 specification for this API
+      description: Machine-readable spec as a JSON document.
+      tags:
+        - Docs
+      responses:
+        '200':
+          description: OpenAPI document
+          content:
+            application/json:
+              schema:
+                type: object
+                description: OpenAPI 3.0.3 document object
+
+  /docs:
+    get:
+      summary: Interactive Swagger UI for this API
+      description: |
+        Returns an HTML page rendering Swagger UI configured to load the spec
+        from /openapi.json. Swagger UI assets are vendored so no internet
+        connection is required.
+      tags:
+        - Docs
+      responses:
+        '200':
+          description: HTML page with Swagger UI
+          content:
+            text/html:
+              schema:
+                type: string
+
+components:
+  schemas:
+    VersionResponse:
+      type: object
+      description: BISS capability document returned by GET /version.
+      required:
+        - version
+        - httpMethods
+        - contentTypes
+        - signatureTypes
+        - selectorAvailable
+        - hashAlgorithms
+      properties:
+        version:
+          type: string
+          description: BISS protocol version implemented by this server.
+          example: "1.0"
+        httpMethods:
+          type: string
+          description: Comma-separated list of HTTP methods supported.
+          example: "GET, POST"
+        contentTypes:
+          type: string
+          description: Comma-separated list of content types that can be signed.
+          example: "data, digest"
+        signatureTypes:
+          type: string
+          description: Comma-separated list of signature types supported.
+          example: "signature"
+        selectorAvailable:
+          type: boolean
+          description: Whether the certificate selector dialog is available.
+          example: true
+        hashAlgorithms:
+          type: string
+          description: Comma-separated list of hash algorithms supported for signing.
+          example: "SHA1, SHA256, SHA384, SHA512"
+
+    GetSignerRequest:
+      type: object
+      description: Request body for POST /getsigner.
+      properties:
+        selector:
+          type: object
+          description: Optional certificate filter criteria. Pass an empty object if no filtering is needed.
+          additionalProperties: true
+          example: {}
+        showValidCerts:
+          type: boolean
+          description: When true, only show certificates that are currently valid (not expired).
+          example: true
+
+    GetSignerResponse:
+      type: object
+      description: Response body for POST /getsigner on success.
+      required:
+        - status
+        - reasonCode
+        - reasonText
+        - chain
+      properties:
+        status:
+          type: string
+          description: Result status. "ok" on success.
+          example: "ok"
+        reasonCode:
+          type: string
+          description: Numeric reason code as a string. "200" on success.
+          example: "200"
+        reasonText:
+          type: string
+          description: Human-readable reason text.
+          example: "Success"
+        chain:
+          type: array
+          description: |
+            Ordered certificate chain as base64-encoded DER bytes.
+            Index 0 is the leaf (signer) certificate, followed by any
+            intermediate certificates found on the same token.
+          items:
+            type: string
+            format: byte
+            description: Base64-encoded DER certificate.
+
+    SignRequest:
+      type: object
+      description: Request body for POST /sign.
+      required:
+        - signerCertificateB64
+        - contents
+      properties:
+        version:
+          type: string
+          description: BISS protocol version. Should match the version from /version.
+          example: "1.0"
+        signerCertificateB64:
+          type: string
+          format: byte
+          description: |
+            Base64-encoded DER certificate of the signer. Must match a
+            certificate present on the currently inserted smart card.
+        contents:
+          type: array
+          description: |
+            Array of base64-encoded byte arrays to sign. Each entry is signed
+            independently and produces one entry in the signatures response array.
+          items:
+            type: string
+            format: byte
+            description: Base64-encoded content to sign.
+        signedContents:
+          type: array
+          description: |
+            Optional anti-replay proof. When present, each entry is a
+            CMS/PKCS#7 signature over the corresponding contents item,
+            signed by a certificate trusted by the OS trust store.
+          items:
+            type: string
+            format: byte
+            description: Base64-encoded CMS/PKCS#7 signature.
+        signedContentsCert:
+          type: array
+          description: |
+            Certificates used to produce the signedContents signatures.
+            Validated against the OS trust store.
+          items:
+            type: string
+            format: byte
+            description: Base64-encoded DER certificate.
+        contentType:
+          type: string
+          description: Content type hint. Typically "data" or "digest".
+          example: "data"
+        hashAlgorithm:
+          type: string
+          description: Hash algorithm to use. One of SHA1, SHA256, SHA384, SHA512.
+          example: "SHA256"
+        signatureType:
+          type: string
+          description: Signature type. Currently only "signature" is supported.
+          example: "signature"
+        confirmText:
+          type: array
+          description: |
+            Optional lines of text shown to the user in the PIN prompt dialog
+            as a confirmation hint (e.g. document title or summary).
+          items:
+            type: string
+
+    SignResponse:
+      type: object
+      description: Response body for POST /sign on success.
+      required:
+        - status
+        - reasonCode
+        - signatures
+        - signatureType
+        - signatureAlgorithm
+      properties:
+        status:
+          type: string
+          description: Result status. "ok" on success.
+          example: "ok"
+        reasonCode:
+          type: string
+          description: Numeric reason code as a string. "200" on success.
+          example: "200"
+        signatures:
+          type: array
+          description: |
+            Produced signatures, one per entry in the request contents array.
+            Each entry is a base64-encoded raw signature byte array.
+          items:
+            type: string
+            format: byte
+            description: Base64-encoded signature bytes.
+        signatureType:
+          type: string
+          description: Signature type used. Matches the request signatureType.
+          example: "signature"
+        signatureAlgorithm:
+          type: string
+          description: Signature algorithm used (e.g. SHA256withRSA).
+          example: "SHA256withRSA"
+
+    ErrorResponse:
+      type: object
+      description: |
+        BISS-compatible error response returned for all error conditions.
+        Field names match the BISS spec so existing client error-handling code works.
+      required:
+        - status
+        - reasonCode
+        - reasonText
+      properties:
+        status:
+          type: string
+          description: Always "error" for error responses.
+          example: "error"
+        reasonCode:
+          type: string
+          description: Numeric HTTP status code as a string.
+          example: "400"
+        reasonText:
+          type: string
+          description: Human-readable description of the error.
+          example: "Invalid JSON body"
