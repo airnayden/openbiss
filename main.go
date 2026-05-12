@@ -89,8 +89,8 @@ func runHeadless(cfg *config.Config) {
 }
 
 func runGUI(cfg *config.Config, tap *logging.Tap) {
-	// CRITICAL Fyne ordering (panics if violated — see T14/T15 learnings):
-	// gui.New (app.NewWithID) → SetTap → BuildMainWindow → BuildTray → TryAcquire
+	// CRITICAL Fyne ordering (panics if violated — see T14 learnings):
+	// gui.New (app.NewWithID) → SetTap → BuildMainWindow → TryAcquire
 	// → server.New → srv.Start goroutine → MaybeShowWizard goroutine → Run()
 	// Run() blocks the OS main thread; server and wizard run in goroutines.
 	// SetTap MUST precede BuildMainWindow so the Logs tab subscribes on first
@@ -104,7 +104,6 @@ func runGUI(cfg *config.Config, tap *logging.Tap) {
 	guiApp.SetTap(tap)
 
 	guiApp.BuildMainWindow()
-	guiApp.BuildTray()
 
 	release, alreadyRunning, err := instance.TryAcquire(cfg.DataDir)
 	if err != nil {
@@ -127,15 +126,10 @@ func runGUI(cfg *config.Config, tap *logging.Tap) {
 
 	guiApp.SetServer(srv)
 
-	srvCtx, srvCancel := context.WithCancel(context.Background())
-	defer srvCancel()
-
-	go func() {
-		if err := srv.Start(srvCtx); err != nil {
-			slog.Error(i18n.T("app.server_error"), "error", err)
-		}
-		slog.Info(i18n.T("app.stopped"))
-	}()
+	if err := guiApp.StartServer(); err != nil {
+		slog.Error(i18n.T("app.failed_create_server"), "error", err)
+		os.Exit(1)
+	}
 
 	go func() {
 		time.Sleep(200 * time.Millisecond)
@@ -143,7 +137,7 @@ func runGUI(cfg *config.Config, tap *logging.Tap) {
 	}()
 
 	guiApp.FyneApp().Lifecycle().SetOnStopped(func() {
-		srvCancel()
+		guiApp.StopServer()
 	})
 
 	guiApp.FyneApp().Run()
