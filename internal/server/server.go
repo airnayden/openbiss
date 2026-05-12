@@ -16,6 +16,7 @@ import (
 	"github.com/openbiss/openbiss/internal/config"
 	"github.com/openbiss/openbiss/internal/i18n"
 	"github.com/openbiss/openbiss/internal/pkcs11"
+	"github.com/openbiss/openbiss/internal/server/openapi"
 	loctls "github.com/openbiss/openbiss/internal/tls"
 	ui "github.com/openbiss/openbiss/internal/ui"
 )
@@ -165,7 +166,31 @@ func (s *Server) buildMux() *http.ServeMux {
 	mux.HandleFunc("/version", handleVersion)
 	mux.HandleFunc("/getsigner", s.handleGetSigner)
 	mux.HandleFunc("/sign", s.handleSign)
+
+	mux.HandleFunc("/openapi.json", handleOpenAPIJSON)
+
+	swaggerHandler := http.FileServer(http.FS(openapi.SwaggerUIFS()))
+	mux.Handle("/docs/", http.StripPrefix("/docs/", swaggerHandler))
+	mux.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/docs/", http.StatusFound)
+	})
+
 	return mux
+}
+
+func handleOpenAPIJSON(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	spec, err := openapi.SpecJSON()
+	if err != nil {
+		http.Error(w, "openapi spec unavailable", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=300")
+	_, _ = w.Write(spec)
 }
 
 // loadDriver attempts to load a PKCS#11 shared library in priority order.
