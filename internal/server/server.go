@@ -61,6 +61,8 @@ type Server struct {
 	// shutdown. Access through Driver() / ReloadDriver() — never directly.
 	driver   *pkcs11.Driver
 	driverMu sync.RWMutex
+
+	stats RequestStats
 }
 
 // New creates a Server but does not start it. Call Start to begin accepting
@@ -102,7 +104,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 	mux := s.buildMux()
 	s.http = &http.Server{
-		Handler:           corsMiddleware(mux),
+		Handler:           s.statsMiddleware(corsMiddleware(mux)),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      60 * time.Second,
@@ -246,6 +248,12 @@ func (s *Server) StartedAt() time.Time {
 	return time.Unix(0, nanos)
 }
 
+// Stats returns the request statistics tracker. Used by the GUI's API
+// tab to read per-endpoint counters and the recent-requests ring.
+func (s *Server) Stats() *RequestStats {
+	return &s.stats
+}
+
 // Uptime returns the duration the server has been running, or 0 if stopped.
 func (s *Server) Uptime() time.Duration {
 	nanos := s.startedAtUnixNano.Load()
@@ -266,4 +274,28 @@ func newSlogWriter(logger *slog.Logger) *slogWriter {
 func (w *slogWriter) Write(p []byte) (int, error) {
 	w.logger.Warn(string(p))
 	return len(p), nil
+}
+
+// statsMiddleware records each request's path, status code, and duration
+// to s.stats. Wraps the response writer to capture WriteHeader calls.
+// Mounted outermost so it sees the final status code AFTER cors + handlers.
+func (s *Server) statsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		sr := &statusResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+		next.ServeHTTP(sr, r)
+		s.stats.RecordRequest(r.Method, r.URL.Path, sr.statusCode, time.Since(start))
+	})
+}
+
+// statusResponseWriter is a minimal http.ResponseWriter wrapper that
+// captures the status code so middleware can record it post-handler.
+type statusResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (sr *statusResponseWriter) WriteHeader(code int) {
+	sr.statusCode = code
+	sr.ResponseWriter.WriteHeader(code)
 }
