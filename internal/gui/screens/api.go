@@ -2,6 +2,7 @@ package screens
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -103,6 +104,22 @@ func NewAPIScreen(srv *server.Server) fyne.CanvasObject {
 
 	refreshBtn := widget.NewButton(i18n.T("ui.api.refresh"), refresh)
 
+	// openDocsBtn launches the embedded Swagger UI in the user's default
+	// browser. srv.Port() returns the actually-bound port, so the URL
+	// follows the auto-selected port rather than being hardcoded. If the
+	// server isn't running (port == 0), the click is a defensive no-op.
+	openDocsBtn := widget.NewButton(i18n.T("ui.api.open_docs"), func() {
+		port := srv.Port()
+		if port == 0 {
+			return
+		}
+		u, err := url.Parse(fmt.Sprintf("https://127.0.0.1:%d/docs/", port))
+		if err != nil {
+			return
+		}
+		_ = fyne.CurrentApp().OpenURL(u)
+	})
+
 	// 2 Hz poller. First tick after apiPollInterval gives the event loop
 	// time to start before any fyne.Do, avoiding the inline-run race that
 	// logs.go originally suffered from.
@@ -125,6 +142,7 @@ func NewAPIScreen(srv *server.Server) fyne.CanvasObject {
 		container.NewHBox(
 			widget.NewLabelWithStyle(i18n.T("ui.api.recent"), fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 			refreshBtn,
+			openDocsBtn,
 		),
 	)
 
