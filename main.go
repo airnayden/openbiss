@@ -91,10 +91,13 @@ func runHeadless(cfg *config.Config) {
 func runGUI(cfg *config.Config, tap *logging.Tap) {
 	// CRITICAL Fyne ordering (panics if violated — see T14 learnings):
 	// gui.New (app.NewWithID) → SetTap → BuildMainWindow → TryAcquire
-	// → server.New → srv.Start goroutine → MaybeShowWizard goroutine → Run()
+	// → uifyne.New → server.New → SetServer → RebuildContent → StartServer
+	// → MaybeShowWizard goroutine → Run()
 	// Run() blocks the OS main thread; server and wizard run in goroutines.
 	// SetTap MUST precede BuildMainWindow so the Logs tab subscribes on first
-	// render rather than the nil-tap placeholder.
+	// render rather than the nil-tap placeholder. RebuildContent MUST follow
+	// SetServer so Status / API / Certificates screens see the live server
+	// instead of the nil-srv placeholder captured at BuildMainWindow time.
 	guiApp, err := gui.New(cfg)
 	if err != nil {
 		slog.Error("gui: failed to create app", "error", err)
@@ -125,6 +128,13 @@ func runGUI(cfg *config.Config, tap *logging.Tap) {
 	}
 
 	guiApp.SetServer(srv)
+
+	// Screens captured a.srv as nil during BuildMainWindow above (the
+	// provider/srv chicken-and-egg means SetServer can only happen
+	// after the window exists). Rebuild the tabs now that the server
+	// reference is live, so Status / API / Certificates initialise
+	// their polling goroutines instead of holding stale-nil placeholders.
+	guiApp.RebuildContent()
 
 	if err := guiApp.StartServer(); err != nil {
 		slog.Error(i18n.T("app.failed_create_server"), "error", err)
