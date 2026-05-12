@@ -14,7 +14,7 @@ BISS is a closed-source Java application used in Bulgaria's health system (НЗ�
 | PKCS#11 libs | Hardcoded | Auto-discovered + `OPENBISS_PKCS11_LIB` override |
 | Languages | Bulgarian only | English + Bulgarian (auto-detect + override) |
 | PIN logging | Unknown | Never logged or stored |
-| GUI | Limited Java UI | Full native Fyne desktop app (5 tabs + system tray) |
+| GUI | Limited Java UI | Full native Fyne desktop app (6 tabs) |
 
 ## Install (one command)
 
@@ -38,7 +38,6 @@ git clone https://github.com/openbiss/openbiss.git && cd openbiss
 ```
 
 Launch from your application menu (search "OpenBISS") or run `openbiss` in a terminal.
-On bare GNOME the tray icon requires the AppIndicator extension.
 
 ### Windows
 
@@ -165,7 +164,7 @@ OPENBISS_PKCS11_LIB=/path/to/your-pkcs11.so openbiss
 
 ## Desktop GUI
 
-OpenBISS ships as a full desktop app with a system tray icon, a 5-tab window (Status, Settings, Logs, Certificates, About), and an in-app first-run wizard.
+OpenBISS ships as a full desktop app with a 6-tab window and an in-app first-run wizard.
 
 Screenshots: [`./docs/screenshots/`](docs/screenshots/)
 
@@ -177,24 +176,18 @@ Screenshots: [`./docs/screenshots/`](docs/screenshots/)
 
 Opens the main window. The server starts automatically in the background. On first launch, a wizard confirms your language preference and detects your smart card reader.
 
+Closing the window quits OpenBISS (the local HTTPS server stops along with the app).
+
 ### Window Tabs
 
 | Tab | What it shows |
 |---|---|
-| **Status** | Server state, port, uptime, and detected certificate count (refreshes every second) |
-| **Settings** | Language, log level, PKCS#11 library path, data directory, autostart toggle, TLS regeneration |
+| **Status** | Server state (Running/Stopped), port, PKCS#11 driver, certificate count, uptime, and Start/Stop server buttons |
+| **API** | Per-endpoint request counters (Version / GetSigner / Sign), success rate, and a scrollable recent-requests list |
+| **Settings** | Language, log level, PKCS#11 library path, autostart toggle, and TLS certificate regeneration |
 | **Logs** | Live scrolling log viewer with Clear button (ring buffer, last 1000 entries) |
 | **Certificates** | Smart card certificates with CN, issuer, and expiry date; Refresh button |
 | **About** | Version, bundle ID, GitHub link, license, and known-behavior disclosures |
-
-### System Tray
-
-The close button (×) minimizes to tray rather than quitting. Right-click the tray icon for:
-
-- **Show OpenBISS** / **Hide OpenBISS**
-- **Quit** — stops the server and exits
-
-On Linux desktops without a StatusNotifier-compatible tray (e.g., plain GNOME without the AppIndicator extension), the close button quits directly instead.
 
 ### Headless / CLI Mode
 
@@ -212,7 +205,7 @@ Open **Settings** and toggle **Start at login**. This creates:
 - Windows: a `HKCU\...\Run\OpenBISS` registry entry
 - Linux: an XDG autostart `.desktop` file at `~/.config/autostart/openbiss.desktop`
 
-The autostart entry launches OpenBISS in GUI mode so the tray icon appears at login.
+The autostart entry launches OpenBISS in GUI mode at login.
 
 ## API Compatibility
 
