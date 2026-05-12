@@ -6,7 +6,7 @@ This directory contains the source-of-truth icon assets for the OpenBISS desktop
 
 | File | Dimensions | Format | Purpose |
 |---|---|---|---|
-| `icon.png` | 1024×1024 | PNG / RGBA, 8-bit | Primary application icon. Consumed by `fyne package` → auto-converted to `.icns` (macOS) and `.ico` (Windows) at build time. |
+| `icon.png` | 1254×1254 | PNG / RGB, 8-bit | Primary application icon. Consumed by `fyne package` → auto-converted to `.icns` (macOS) and `.ico` (Windows) at build time. |
 | `tray-light.png` | 22×22 | PNG / RGBA, 8-bit | Menu-bar / system-tray icon for **dark** menu bars (white silhouette on transparent). Also serves as the macOS template-image source — Fyne handles the dark/light inversion automatically on macOS. |
 | `tray-dark.png` | 22×22 | PNG / RGBA, 8-bit | Menu-bar / system-tray icon for **light** menu bars (black silhouette on transparent). |
 

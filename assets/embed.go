@@ -8,7 +8,7 @@ package assets
 
 import _ "embed"
 
-// IconPNG is the 1024×1024 RGBA application icon (assets/icon.png), used as
+// IconPNG is the 1254×1254 RGB application icon (assets/icon.png), used as
 // the Fyne app icon (taskbar, dock, window decorations).
 //
 //go:embed icon.png
