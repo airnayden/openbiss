@@ -64,6 +64,7 @@
   "api.success": "Success",
 
   "ui.window.title": "OpenBISS",
+  "ui.tab.api": "API",
   "ui.tab.status": "Status",
   "ui.tab.settings": "Settings",
   "ui.tab.logs": "Logs",
@@ -78,6 +79,9 @@
   "ui.status.driver.none": "PKCS#11 driver: not loaded",
   "ui.status.certcount": "Certificates available: %d",
   "ui.status.uptime": "Uptime: %s",
+  "ui.status.start": "Start",
+  "ui.status.stop": "Stop",
+  "ui.status.stop.confirm": "Stop the server? Browsers will not be able to sign documents until you start it again.",
   "ui.settings.lang": "Language",
   "ui.settings.lang.en": "English",
   "ui.settings.lang.bg": "Bulgarian",
@@ -108,10 +112,6 @@
   "ui.about.behaviors.title": "Known behaviors",
   "ui.about.behaviors.pincancel": "Cancelling the PIN dialog discards the result locally; the smart card may still complete the operation briefly.",
   "ui.about.behaviors.unsigned": "This build is not code-signed. See SECURITY-WARNINGS.md for Gatekeeper/SmartScreen bypass.",
-  "ui.tray.show": "Show OpenBISS",
-  "ui.tray.hide": "Hide OpenBISS",
-  "ui.tray.quit": "Quit",
-  "ui.tray.status_label": "Running on port %d",
   "ui.wizard.welcome": "Welcome to OpenBISS",
   "ui.wizard.lang.prompt": "Choose your preferred language:",
   "ui.wizard.detect": "Detecting smart card reader\u2026",
@@ -123,5 +123,18 @@
   "ui.dialog.pin.label": "PIN:",
   "ui.dialog.cert.title": "Select certificate",
   "ui.error.port_in_use": "Ports 53952-53955 in use by another process.",
-  "ui.error.tray_unavailable": "System tray not available on this desktop. Close button will quit the app."
+
+  "ui.api.duration": "Duration (ms)",
+  "ui.api.empty": "No requests yet.",
+  "ui.api.endpoint": "Endpoint",
+  "ui.api.errors": "Errors",
+  "ui.api.method": "Method",
+  "ui.api.path": "Path",
+  "ui.api.recent": "Recent requests",
+  "ui.api.refresh": "Refresh",
+  "ui.api.status": "Status",
+  "ui.api.success": "Success",
+  "ui.api.successrate": "Success rate: %d%%",
+  "ui.api.time": "Time",
+  "ui.api.total": "Total"
 }
