@@ -34,6 +34,8 @@ func NewAPIScreen(srv *server.Server) fyne.CanvasObject {
 		return container.NewPadded(widget.NewLabel(i18n.T("ui.api.empty")))
 	}
 
+	addressLabel := widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+
 	versionLabel := widget.NewLabel("")
 	getsignerLabel := widget.NewLabel("")
 	signLabel := widget.NewLabel("")
@@ -47,12 +49,13 @@ func NewAPIScreen(srv *server.Server) fyne.CanvasObject {
 	recentScroll := container.NewScroll(recentEntry)
 
 	var prev struct {
-		version, getsigner, sign, other, rate, recent string
+		address, version, getsigner, sign, other, rate, recent string
 	}
 
 	stats := srv.Stats()
 
 	refresh := func() {
+		nextAddress := addressLine(srv)
 		nextVersion := endpointLine("GET /version", &stats.Version)
 		nextGetSigner := endpointLine("POST /getsigner", &stats.GetSigner)
 		nextSign := endpointLine("POST /sign", &stats.Sign)
@@ -61,6 +64,11 @@ func NewAPIScreen(srv *server.Server) fyne.CanvasObject {
 		nextRecent := formatRecent(stats.Recent())
 
 		var changes []func()
+		if nextAddress != prev.address {
+			prev.address = nextAddress
+			v := nextAddress
+			changes = append(changes, func() { addressLabel.SetText(v) })
+		}
 		if nextVersion != prev.version {
 			prev.version = nextVersion
 			v := nextVersion
@@ -132,6 +140,8 @@ func NewAPIScreen(srv *server.Server) fyne.CanvasObject {
 	}()
 
 	header := container.NewVBox(
+		addressLabel,
+		widget.NewSeparator(),
 		versionLabel,
 		getsignerLabel,
 		signLabel,
@@ -147,6 +157,20 @@ func NewAPIScreen(srv *server.Server) fyne.CanvasObject {
 	)
 
 	return container.NewBorder(header, nil, nil, nil, recentScroll)
+}
+
+// addressLine renders "Address: https://127.0.0.1:53952" when the
+// server is running, falling back to the localised lifecycle state
+// (Stopped / Starting… / Stopping…) otherwise. Re-evaluated each refresh
+// tick so a stop-start cycle that binds a different port from the BISS
+// pool (53952–53955) propagates to the UI automatically.
+func addressLine(srv *server.Server) string {
+	if srv.State() == server.StateRunning {
+		if port := srv.Port(); port != 0 {
+			return i18n.T("ui.api.address", fmt.Sprintf("https://127.0.0.1:%d", port))
+		}
+	}
+	return i18n.T("ui.api.address", i18n.T(stateKey(srv.State())))
 }
 
 // endpointLine formats one counter row as

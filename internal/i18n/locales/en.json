@@ -120,6 +120,7 @@
   "ui.dialog.cert.title": "Select certificate",
   "ui.error.port_in_use": "Ports 53952-53955 in use by another process.",
 
+  "ui.api.address": "Address: %s",
   "ui.api.duration": "Duration (ms)",
   "ui.api.empty": "No requests yet.",
   "ui.api.endpoint": "Endpoint",
