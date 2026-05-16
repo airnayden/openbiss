@@ -134,5 +134,17 @@
   "ui.api.successrate": "Success rate: %d%%",
   "ui.api.time": "Time",
   "ui.api.total": "Total",
-  "ui.api.open_docs": "Open API Documentation"
+  "ui.api.open_docs": "Open API Documentation",
+  "ui.api.click_hint": "Click a row to inspect its request and response below.",
+  "ui.api.clear_selection": "Clear selection",
+  "ui.api.detail.empty": "Select a request above to inspect its envelope.",
+  "ui.api.detail.time": "Time:",
+  "ui.api.detail.status": "Status:",
+  "ui.api.detail.duration": "Duration:",
+  "ui.api.detail.req_headers": "── Request headers ──",
+  "ui.api.detail.req_body": "── Request body ──",
+  "ui.api.detail.resp_headers": "── Response headers ──",
+  "ui.api.detail.resp_body": "── Response body ──",
+  "ui.api.detail.empty_section": "(empty)",
+  "ui.api.detail.truncated": "… (%d more bytes truncated)"
 }

@@ -1,8 +1,27 @@
 # OpenBISS
 
+[![Build](https://github.com/openbiss/openbiss/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/openbiss/openbiss/actions/workflows/build.yml)
+[![Release](https://img.shields.io/github/v/release/openbiss/openbiss?display_name=tag&sort=semver)](https://github.com/openbiss/openbiss/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Go Reference](https://pkg.go.dev/badge/github.com/openbiss/openbiss.svg)](https://pkg.go.dev/github.com/openbiss/openbiss)
+
 Open-source replacement for BORICA's BISS (Browser Independent Signing Service) written in Go.
 
 BISS is a closed-source Java application used in Bulgaria's health system (НЗИС), e-prescriptions, and dental reporting. It runs as a local HTTPS server on ports 53952–53955 and enables browsers to sign documents using smart cards (КЕП / qualified electronic signatures) via PKCS#11.
+
+## Table of Contents
+
+- [Why OpenBISS?](#why-openbiss)
+- [Download a Prebuilt Binary](#download-a-prebuilt-binary)
+- [Install (one command)](#install-one-command)
+- [Manual Installation](#manual-installation)
+- [Usage](#usage)
+- [Desktop GUI](#desktop-gui)
+- [API Compatibility](#api-compatibility)
+- [Building from Source](#building-from-source)
+- [Continuous Integration](#continuous-integration)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Why OpenBISS?
 
@@ -15,6 +34,49 @@ BISS is a closed-source Java application used in Bulgaria's health system (НЗ�
 | Languages | Bulgarian only | English + Bulgarian (auto-detect + override) |
 | PIN logging | Unknown | Never logged or stored |
 | GUI | Limited Java UI | Full native Fyne desktop app (6 tabs) |
+| Distribution | Vendor-only installer | GitHub Releases + CI-built binaries for Linux/macOS/Windows |
+
+## Download a Prebuilt Binary
+
+Every push to `main` builds artifacts for all three platforms via [GitHub Actions](.github/workflows/build.yml). Every tagged release (`v*`) uploads signed-by-checksum binaries to GitHub Releases.
+
+Grab the latest from [Releases](https://github.com/openbiss/openbiss/releases/latest):
+
+| Platform | Asset |
+|---|---|
+| Linux (x86-64) | `openbiss-linux-amd64` |
+| macOS (Intel) | `openbiss-darwin-amd64` |
+| macOS (Apple Silicon) | `openbiss-darwin-arm64` |
+| Windows (x86-64) | `openbiss-windows-amd64.exe` |
+
+Each asset is accompanied by `<asset>.sha256` for integrity verification.
+
+```bash
+# Linux / macOS — replace VERSION and PLATFORM as needed
+VERSION=v0.1.0
+PLATFORM=linux-amd64        # or darwin-amd64 / darwin-arm64
+curl -fsSLO "https://github.com/openbiss/openbiss/releases/download/${VERSION}/openbiss-${PLATFORM}"
+curl -fsSLO "https://github.com/openbiss/openbiss/releases/download/${VERSION}/openbiss-${PLATFORM}.sha256"
+shasum -a 256 -c "openbiss-${PLATFORM}.sha256"
+chmod +x "openbiss-${PLATFORM}"
+sudo mv "openbiss-${PLATFORM}" /usr/local/bin/openbiss
+openbiss --headless        # or just `openbiss` for the GUI
+```
+
+```powershell
+# Windows (PowerShell)
+$Version = "v0.1.0"
+$Asset   = "openbiss-windows-amd64.exe"
+Invoke-WebRequest "https://github.com/openbiss/openbiss/releases/download/$Version/$Asset" -OutFile $Asset
+Invoke-WebRequest "https://github.com/openbiss/openbiss/releases/download/$Version/$Asset.sha256" -OutFile "$Asset.sha256"
+# Verify
+$expected = (Get-Content "$Asset.sha256").Split(' ')[0]
+$actual   = (Get-FileHash $Asset -Algorithm SHA256).Hash.ToLower()
+if ($expected -ne $actual) { throw "Checksum mismatch" }
+.\$Asset
+```
+
+Pre-built binaries are **not code-signed**. See [Security Warnings](#security-warnings-unsigned-binaries) below.
 
 ## Install (one command)
 
@@ -55,31 +117,31 @@ Your config and TLS certificate in `~/.openbiss` (`%APPDATA%\OpenBISS` on Window
 
 ## Manual Installation
 
-### macOS / Linux
+### macOS / Linux (binary install via the bundled installer)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/openbiss/openbiss/main/tools/openbiss/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/openbiss/openbiss/main/scripts/install.sh | bash
 ```
 
-Or manually:
+This installer downloads the latest GitHub Release binary for your platform, installs it to `/usr/local/bin/openbiss`, and registers a launchd / systemd unit so OpenBISS starts at login.
+
+Or build manually:
 
 ```bash
-# Build from source
-cd tools/openbiss
-make build-darwin        # Intel Mac
-make build-darwin-arm    # Apple Silicon
-make build-linux         # Linux x86-64
+git clone https://github.com/openbiss/openbiss.git && cd openbiss
 
-# Copy to PATH
-cp dist/openbiss-darwin-arm64 /usr/local/bin/openbiss
-chmod +x /usr/local/bin/openbiss
+make build-darwin        # Intel Mac     → dist/openbiss-darwin-amd64
+make build-darwin-arm    # Apple Silicon → dist/openbiss-darwin-arm64
+make build-linux         # Linux x86-64  → dist/openbiss-linux-amd64
+
+sudo install -m 755 dist/openbiss-$(uname -s | tr A-Z a-z)-$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') /usr/local/bin/openbiss
 ```
 
-### Windows
+### Windows (build manually)
 
 ```powershell
-# Build from source
-cd tools\openbiss
+git clone https://github.com/openbiss/openbiss.git
+cd openbiss
 make build-windows
 
 # Run
@@ -183,7 +245,7 @@ Closing the window quits OpenBISS (the local HTTPS server stops along with the a
 | Tab | What it shows |
 |---|---|
 | **Status** | Server state (Running/Stopped), port, PKCS#11 driver, certificate count, uptime, and Start/Stop server buttons |
-| **API** | Per-endpoint request counters (Version / GetSigner / Sign), success rate, and a scrollable recent-requests list; includes an **Open API Documentation** button that opens an interactive Swagger UI at `https://127.0.0.1:<port>/docs` (vendored, works offline) |
+| **API** | Per-endpoint request counters (Version / GetSigner / Sign), success rate, a numbered list of recent requests, and a **request detail panel** showing the selected request's method, path, status, duration, full request + response headers, and bounded request + response bodies (cap 64 KiB / direction; `Authorization`, `Cookie`, `Set-Cookie`, `Proxy-Authorization` are redacted). Includes an **Open API Documentation** button that opens an interactive Swagger UI at `https://127.0.0.1:<port>/docs` (vendored, works offline) |
 | **Settings** | Language, log level, PKCS#11 library path, autostart toggle, and TLS certificate regeneration |
 | **Logs** | Live scrolling log viewer with Clear button (ring buffer, last 1000 entries) |
 | **Certificates** | Smart card certificates with CN, issuer, and expiry date; Refresh button |
@@ -227,37 +289,67 @@ The `/sign` endpoint validates `signedContentsCert` against the **OS trust store
 - ✅ Enterprise internal CAs trusted by the OS are accepted  
 - ❌ Certificates NOT trusted by the OS are rejected (prevents MITM)
 
-## Building
+## Building from Source
 
 ```bash
-cd tools/openbiss
-make build-all    # all platforms
-make build        # current platform
-make vet          # go vet
+make build        # current platform → ./openbiss
+make build-all    # cross-compile to dist/openbiss-{linux,darwin,windows}-*
+make vet          # go vet ./...
+make clean        # remove ./openbiss and dist/
 ```
 
-## Building Release Bundles
+CGO is required (Fyne uses GL bindings). On macOS install Xcode Command Line Tools (`xcode-select --install`); on Linux install the OpenGL + X11 dev headers (the [install-linux.sh](scripts/install-linux.sh) script will tell you the exact package names per distro); on Windows install MinGW-w64.
+
+### Release Bundles (GUI installers)
 
 Release bundles (macOS `.app`, Windows `.exe` with icon, Linux tarball) are built with [fyne-cross](https://github.com/fyne-io/fyne-cross), which requires Docker.
 
 ```bash
-# Install fyne-cross (once)
-go install github.com/fyne-io/fyne-cross@latest
-
-# Build all platform bundles
-make package-all
+make fyne-deps     # one-time install of fyne + fyne-cross
+make package-all   # produces fyne-cross/dist/{darwin,windows,linux}/
 ```
 
 `make package-all` produces:
 
 | Output | Platform |
 |---|---|
-| `dist/OpenBISS-darwin-amd64.app` | macOS Intel |
-| `dist/OpenBISS-darwin-arm64.app` | macOS Apple Silicon |
-| `dist/OpenBISS-windows-amd64.exe` | Windows x86-64 |
-| `dist/openbiss-linux-amd64.tar.gz` | Linux x86-64 |
+| `OpenBISS-darwin-amd64.app` | macOS Intel |
+| `OpenBISS-darwin-arm64.app` | macOS Apple Silicon |
+| `OpenBISS-windows-amd64.exe` | Windows x86-64 |
+| `openbiss-linux-amd64.tar.gz` | Linux x86-64 |
 
 Bundles embed the app icon (`assets/icon.png`) and `FyneApp.toml` metadata. They are **not code-signed**. See [docs/SECURITY-WARNINGS.md](docs/SECURITY-WARNINGS.md) for Gatekeeper and SmartScreen bypass instructions.
+
+## Continuous Integration
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| [`build.yml`](.github/workflows/build.yml) | every push to `main`, every pull request, manual dispatch | `go vet` + `go build` on Ubuntu, macOS Intel, macOS Apple Silicon and Windows runners; uploads each native binary as a workflow artifact (14-day retention) |
+| [`release.yml`](.github/workflows/release.yml) | every tag matching `v*`, or manual dispatch with a tag input | cross-platform native builds + SHA-256 checksums; uploads `openbiss-<platform>` + `openbiss-<platform>.sha256` to the matching GitHub Release; auto-generates release notes from commits |
+
+The matrix covers four targets:
+
+| Runner | GOOS / GOARCH | Artifact |
+|---|---|---|
+| `ubuntu-latest` | `linux/amd64` | `openbiss-linux-amd64` |
+| `macos-13` | `darwin/amd64` | `openbiss-darwin-amd64` |
+| `macos-latest` | `darwin/arm64` | `openbiss-darwin-arm64` |
+| `windows-latest` | `windows/amd64` | `openbiss-windows-amd64.exe` |
+
+Each binary is built **natively** on its target OS (no cross-compilation), so the Fyne CGo + OpenGL toolchain is satisfied on every runner. Build hardening flags: `-s -w` (strip + omit DWARF) and, on Windows, `-H windowsgui` so launching the binary doesn't spawn a console window.
+
+### Cutting a Release
+
+```bash
+git tag -a v0.1.0 -m "OpenBISS v0.1.0"
+git push origin v0.1.0
+```
+
+The `release.yml` workflow takes over: it builds all four targets, computes SHA-256 checksums, and uploads everything to the GitHub Release for tag `v0.1.0`.
+
+## Contributing
+
+Bug reports and pull requests are welcome at [github.com/openbiss/openbiss/issues](https://github.com/openbiss/openbiss/issues). The CI matrix above must stay green for any merge to `main`.
 
 ## License
 

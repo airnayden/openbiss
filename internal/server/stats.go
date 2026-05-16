@@ -1,18 +1,37 @@
 package server
 
 import (
+	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
+// MaxBodyCapture is the per-direction body size cap (bytes) for the recent-
+// requests ring. Bodies larger than this are truncated and the suffix
+// "... (N more bytes truncated)" is appended so the UI never balloons memory
+// when a client uploads a multi-megabyte /sign payload. 64 KiB comfortably
+// fits a typical signedContents + base64 contents pair.
+const MaxBodyCapture = 64 * 1024
+
 // RequestRecord is a single captured request in the recent-requests ring.
+// In addition to the lightweight counters in EndpointCounters, it stores
+// enough of the HTTP envelope (headers + bodies) to render an expandable
+// debug view in the API tab. PII risk is low: PIN entry never crosses
+// HTTP — it is collected via a native OS dialog. The Authorization header
+// is redacted defensively in case future clients add one.
 type RequestRecord struct {
-	Time           time.Time
-	Method         string
-	Path           string
-	StatusCode     int
-	DurationMillis int64
+	Time            time.Time
+	Method          string
+	Path            string
+	StatusCode      int
+	DurationMillis  int64
+	RequestHeaders  http.Header
+	RequestBody     string
+	RequestTrunc    int
+	ResponseHeaders http.Header
+	ResponseBody    string
+	ResponseTrunc   int
 }
 
 // EndpointCounters tracks 2xx / 4xx / 5xx + total counts per endpoint.
@@ -45,27 +64,22 @@ type RequestStats struct {
 
 // RecordRequest writes a request to the appropriate counters and ring.
 // Safe for concurrent use from any goroutine; the hot path (counters) is
-// lock-free.
-func (s *RequestStats) RecordRequest(method, path string, statusCode int, duration time.Duration) {
-	counters := s.bucket(path)
+// lock-free. The caller is responsible for any header redaction; this
+// function snapshots the headers it receives.
+func (s *RequestStats) RecordRequest(rec RequestRecord) {
+	counters := s.bucket(rec.Path)
 	counters.Total.Add(1)
 	switch {
-	case statusCode >= 500:
+	case rec.StatusCode >= 500:
 		counters.ServerError.Add(1)
-	case statusCode >= 400:
+	case rec.StatusCode >= 400:
 		counters.ClientError.Add(1)
-	case statusCode >= 200 && statusCode < 300:
+	case rec.StatusCode >= 200 && rec.StatusCode < 300:
 		counters.Success.Add(1)
 	}
 
 	s.mu.Lock()
-	s.ring[s.head] = RequestRecord{
-		Time:           time.Now(),
-		Method:         method,
-		Path:           path,
-		StatusCode:     statusCode,
-		DurationMillis: duration.Milliseconds(),
-	}
+	s.ring[s.head] = rec
 	s.head = (s.head + 1) % MaxRecentRequests
 	if s.size < MaxRecentRequests {
 		s.size++

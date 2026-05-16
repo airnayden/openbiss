@@ -1,10 +1,12 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
 	"net"
@@ -301,26 +303,162 @@ func (w *slogWriter) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-// statsMiddleware records each request's path, status code, and duration
-// to s.stats. Wraps the response writer to capture WriteHeader calls.
-// Mounted outermost so it sees the final status code AFTER cors + handlers.
+// statsMiddleware records each request's full envelope (method, path,
+// status, duration, headers, and capped bodies) to s.stats. Bodies are
+// captured up to MaxBodyCapture bytes; anything beyond is reported as a
+// truncation count but is still passed through to the handler. Skips body
+// capture for /docs/* and /openapi.json so the embedded Swagger UI assets
+// do not flood the ring with HTML/CSS. Mounted outermost so it sees the
+// final status code AFTER cors + handlers.
 func (s *Server) statsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		sr := &statusResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+
+		reqHeaders := redactHeaders(r.Header)
+
+		captureBody := !isDocsPath(r.URL.Path)
+
+		var reqTee *cappedTeeBody
+		if captureBody && r.Body != nil {
+			reqTee = &cappedTeeBody{src: r.Body, limit: MaxBodyCapture}
+			r.Body = reqTee
+		}
+
+		sr := &recordingResponseWriter{
+			ResponseWriter: w,
+			statusCode:     http.StatusOK,
+			capture:        captureBody,
+			limit:          MaxBodyCapture,
+		}
 		next.ServeHTTP(sr, r)
-		s.stats.RecordRequest(r.Method, r.URL.Path, sr.statusCode, time.Since(start))
+
+		var reqBody string
+		var reqTrunc int
+		if reqTee != nil {
+			reqBody = reqTee.captured.String()
+			reqTrunc = reqTee.trunc
+		}
+
+		s.stats.RecordRequest(RequestRecord{
+			Time:            time.Now(),
+			Method:          r.Method,
+			Path:            r.URL.Path,
+			StatusCode:      sr.statusCode,
+			DurationMillis:  time.Since(start).Milliseconds(),
+			RequestHeaders:  reqHeaders,
+			RequestBody:     reqBody,
+			RequestTrunc:    reqTrunc,
+			ResponseHeaders: redactHeaders(sr.Header()),
+			ResponseBody:    sr.buf.String(),
+			ResponseTrunc:   sr.truncated,
+		})
 	})
 }
 
-// statusResponseWriter is a minimal http.ResponseWriter wrapper that
-// captures the status code so middleware can record it post-handler.
-type statusResponseWriter struct {
-	http.ResponseWriter
-	statusCode int
+// isDocsPath returns true for the embedded Swagger UI / OpenAPI spec
+// routes. Bodies on those routes are static assets that would dominate
+// the recent-requests ring without adding diagnostic value.
+func isDocsPath(p string) bool {
+	if p == "/openapi.json" || p == "/docs" {
+		return true
+	}
+	return len(p) >= 6 && p[:6] == "/docs/"
 }
 
-func (sr *statusResponseWriter) WriteHeader(code int) {
+// redactHeaders copies h and replaces credential-bearing values with
+// "***" so tokens cannot leak into the in-memory ring or the disk log.
+// BISS itself does not use these headers, but defensive redaction lets
+// us safely show the full header set in the UI.
+func redactHeaders(h http.Header) http.Header {
+	if h == nil {
+		return nil
+	}
+	out := make(http.Header, len(h))
+	for k, v := range h {
+		switch http.CanonicalHeaderKey(k) {
+		case "Authorization", "Cookie", "Set-Cookie", "Proxy-Authorization":
+			redacted := make([]string, len(v))
+			for i := range v {
+				redacted[i] = "***"
+			}
+			out[k] = redacted
+		default:
+			out[k] = append([]string(nil), v...)
+		}
+	}
+	return out
+}
+
+// cappedTeeBody is a streaming io.ReadCloser wrapper used to record the
+// first `limit` bytes a handler reads from r.Body while still forwarding
+// the full stream downstream. Bytes beyond the cap are counted in `trunc`
+// and discarded from the capture buffer. This preserves handler semantics
+// — the handler always sees the FULL request body — while bounding the
+// memory footprint of the recent-requests ring.
+type cappedTeeBody struct {
+	src      io.ReadCloser
+	captured bytes.Buffer
+	limit    int
+	trunc    int
+}
+
+func (c *cappedTeeBody) Read(p []byte) (int, error) {
+	n, err := c.src.Read(p)
+	if n > 0 {
+		remaining := c.limit - c.captured.Len()
+		switch {
+		case remaining >= n:
+			c.captured.Write(p[:n])
+		case remaining > 0:
+			c.captured.Write(p[:remaining])
+			c.trunc += n - remaining
+		default:
+			c.trunc += n
+		}
+	}
+	return n, err
+}
+
+func (c *cappedTeeBody) Close() error {
+	return c.src.Close()
+}
+
+// recordingResponseWriter wraps http.ResponseWriter to capture the
+// final status code AND a bounded copy of the response body. Bytes
+// written past `limit` are dropped from the buffer but still forwarded
+// to the underlying writer so the client always sees the full response.
+type recordingResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+	wroteCode  bool
+	capture    bool
+	limit      int
+	buf        bytes.Buffer
+	truncated  int
+}
+
+func (sr *recordingResponseWriter) WriteHeader(code int) {
+	if sr.wroteCode {
+		sr.ResponseWriter.WriteHeader(code)
+		return
+	}
 	sr.statusCode = code
+	sr.wroteCode = true
 	sr.ResponseWriter.WriteHeader(code)
+}
+
+func (sr *recordingResponseWriter) Write(p []byte) (int, error) {
+	if sr.capture {
+		remaining := sr.limit - sr.buf.Len()
+		switch {
+		case remaining >= len(p):
+			sr.buf.Write(p)
+		case remaining > 0:
+			sr.buf.Write(p[:remaining])
+			sr.truncated += len(p) - remaining
+		default:
+			sr.truncated += len(p)
+		}
+	}
+	return sr.ResponseWriter.Write(p)
 }
