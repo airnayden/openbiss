@@ -13,8 +13,9 @@ import (
 var defaultWindowSize = fyne.NewSize(800, 600)
 
 // BuildMainWindow constructs the main settings/status window with the
-// five-tab layout (Status, Settings, Logs, Certificates, About), stores
-// it on the App, shows it, and wires the close button to quit the app.
+// six-tab layout (Status, API, Settings, Logs, Certificates, About),
+// stores it on the App, shows it, and wires the close button to quit
+// the app.
 func (a *App) BuildMainWindow() fyne.Window {
 	w := a.fyneApp.NewWindow(i18n.T("ui.window.title"))
 	w.Resize(defaultWindowSize)

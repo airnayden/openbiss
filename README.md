@@ -249,7 +249,7 @@ Closing the window quits OpenBISS (the local HTTPS server stops along with the a
 | **Settings** | Language, log level, PKCS#11 library path, autostart toggle, and TLS certificate regeneration |
 | **Logs** | Live scrolling log viewer with Clear button (ring buffer, last 1000 entries) |
 | **Certificates** | Smart card certificates with CN, issuer, and expiry date; Refresh button |
-| **About** | Version, bundle ID, GitHub link, license, and known-behavior disclosures |
+| **About** | App icon, version, bundle ID, and author. Fully static by design — opening this tab makes no network calls (no update probe, no telemetry, no version check) |
 
 ### Headless / CLI Mode
 
