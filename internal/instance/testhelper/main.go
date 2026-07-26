@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/openbiss/openbiss/internal/instance"
+	"github.com/airnayden/openbiss/internal/instance"
 )
 
 func main() {

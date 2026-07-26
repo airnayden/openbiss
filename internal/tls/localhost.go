@@ -29,7 +29,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/openbiss/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/i18n"
 )
 
 // LoadOrGenerate loads TLS credentials from certPath/keyPath, generating a new

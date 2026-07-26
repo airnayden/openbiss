@@ -16,7 +16,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/openbiss/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/i18n"
 )
 
 // Version is the OpenBISS version string, mirrored in the /version endpoint

@@ -19,8 +19,8 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/openbiss/openbiss/internal/i18n"
-	"github.com/openbiss/openbiss/internal/ui"
+	"github.com/airnayden/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/ui"
 )
 
 // FyneDialog implements ui.DialogProvider using modal Fyne windows over the

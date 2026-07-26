@@ -10,9 +10,9 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/openbiss/openbiss/internal/i18n"
-	"github.com/openbiss/openbiss/internal/pkcs11"
-	"github.com/openbiss/openbiss/internal/server"
+	"github.com/airnayden/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/pkcs11"
+	"github.com/airnayden/openbiss/internal/server"
 )
 
 // certListDateFormat is the user-visible expiry-date format on the cert

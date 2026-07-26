@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/openbiss/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/i18n"
 )
 
 func trustCert(certPath string) {

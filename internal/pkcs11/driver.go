@@ -12,7 +12,7 @@ import (
 
 	p11 "github.com/miekg/pkcs11"
 
-	"github.com/openbiss/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/i18n"
 )
 
 // ErrNoToken is returned when no PKCS#11 token/reader is available.

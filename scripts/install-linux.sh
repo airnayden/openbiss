@@ -34,7 +34,7 @@ APP_NAME="OpenBISS"
 BINARY_NAME="openbiss"
 APP_ID="com.openbiss.openbiss"
 ICON_SRC="assets/icon.png"
-MODULE_PATH="github.com/openbiss/openbiss"
+MODULE_PATH="github.com/airnayden/openbiss"
 
 USER_PREFIX="${HOME}/.local"
 SYSTEM_PREFIX="/usr/local"

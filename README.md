@@ -1,9 +1,9 @@
 # OpenBISS
 
-[![Build](https://github.com/openbiss/openbiss/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/openbiss/openbiss/actions/workflows/build.yml)
-[![Release](https://img.shields.io/github/v/release/openbiss/openbiss?display_name=tag&sort=semver)](https://github.com/openbiss/openbiss/releases/latest)
+[![Build](https://github.com/airnayden/openbiss/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/airnayden/openbiss/actions/workflows/build.yml)
+[![Release](https://img.shields.io/github/v/release/airnayden/openbiss?display_name=tag&sort=semver)](https://github.com/airnayden/openbiss/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Go Reference](https://pkg.go.dev/badge/github.com/openbiss/openbiss.svg)](https://pkg.go.dev/github.com/openbiss/openbiss)
+[![Go Reference](https://pkg.go.dev/badge/github.com/airnayden/openbiss.svg)](https://pkg.go.dev/github.com/airnayden/openbiss)
 
 Open-source replacement for BORICA's BISS (Browser Independent Signing Service) written in Go.
 
@@ -40,7 +40,7 @@ BISS is a closed-source Java application used in Bulgaria's health system (НЗ�
 
 Every push to `main` builds artifacts for all three platforms via [GitHub Actions](.github/workflows/build.yml). Every tagged release (`v*`) uploads signed-by-checksum binaries to GitHub Releases.
 
-Grab the latest from [Releases](https://github.com/openbiss/openbiss/releases/latest):
+Grab the latest from [Releases](https://github.com/airnayden/openbiss/releases/latest):
 
 | Platform | Asset |
 |---|---|
@@ -55,8 +55,8 @@ Each asset is accompanied by `<asset>.sha256` for integrity verification.
 # Linux / macOS — replace VERSION and PLATFORM as needed
 VERSION=v0.1.0
 PLATFORM=linux-amd64        # or darwin-amd64 / darwin-arm64
-curl -fsSLO "https://github.com/openbiss/openbiss/releases/download/${VERSION}/openbiss-${PLATFORM}"
-curl -fsSLO "https://github.com/openbiss/openbiss/releases/download/${VERSION}/openbiss-${PLATFORM}.sha256"
+curl -fsSLO "https://github.com/airnayden/openbiss/releases/download/${VERSION}/openbiss-${PLATFORM}"
+curl -fsSLO "https://github.com/airnayden/openbiss/releases/download/${VERSION}/openbiss-${PLATFORM}.sha256"
 shasum -a 256 -c "openbiss-${PLATFORM}.sha256"
 chmod +x "openbiss-${PLATFORM}"
 sudo mv "openbiss-${PLATFORM}" /usr/local/bin/openbiss
@@ -67,8 +67,8 @@ openbiss --headless        # or just `openbiss` for the GUI
 # Windows (PowerShell)
 $Version = "v0.1.0"
 $Asset   = "openbiss-windows-amd64.exe"
-Invoke-WebRequest "https://github.com/openbiss/openbiss/releases/download/$Version/$Asset" -OutFile $Asset
-Invoke-WebRequest "https://github.com/openbiss/openbiss/releases/download/$Version/$Asset.sha256" -OutFile "$Asset.sha256"
+Invoke-WebRequest "https://github.com/airnayden/openbiss/releases/download/$Version/$Asset" -OutFile $Asset
+Invoke-WebRequest "https://github.com/airnayden/openbiss/releases/download/$Version/$Asset.sha256" -OutFile "$Asset.sha256"
 # Verify
 $expected = (Get-Content "$Asset.sha256").Split(' ')[0]
 $actual   = (Get-FileHash $Asset -Algorithm SHA256).Hash.ToLower()
@@ -83,7 +83,7 @@ Pre-built binaries are **not code-signed**. See [Security Warnings](#security-wa
 ### macOS
 
 ```bash
-git clone https://github.com/openbiss/openbiss.git && cd openbiss
+git clone https://github.com/airnayden/openbiss.git && cd openbiss
 ./scripts/install-macos.sh --user    # installs to ~/Applications
 # or: ./scripts/install-macos.sh    # installs to /Applications (may prompt for sudo)
 ```
@@ -94,7 +94,7 @@ asks for your password once to trust the local TLS certificate.
 ### Linux
 
 ```bash
-git clone https://github.com/openbiss/openbiss.git && cd openbiss
+git clone https://github.com/airnayden/openbiss.git && cd openbiss
 ./scripts/install-linux.sh           # installs to ~/.local
 # or: ./scripts/install-linux.sh --system    # installs to /usr/local (requires sudo)
 ```
@@ -104,7 +104,7 @@ Launch from your application menu (search "OpenBISS") or run `openbiss` in a ter
 ### Windows
 
 ```powershell
-git clone https://github.com/openbiss/openbiss.git
+git clone https://github.com/airnayden/openbiss.git
 cd openbiss
 .\scripts\install-windows.ps1
 ```
@@ -120,7 +120,7 @@ Your config and TLS certificate in `~/.openbiss` (`%APPDATA%\OpenBISS` on Window
 ### macOS / Linux (binary install via the bundled installer)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/openbiss/openbiss/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/airnayden/openbiss/main/scripts/install.sh | bash
 ```
 
 This installer downloads the latest GitHub Release binary for your platform, installs it to `/usr/local/bin/openbiss`, and registers a launchd / systemd unit so OpenBISS starts at login.
@@ -128,7 +128,7 @@ This installer downloads the latest GitHub Release binary for your platform, ins
 Or build manually:
 
 ```bash
-git clone https://github.com/openbiss/openbiss.git && cd openbiss
+git clone https://github.com/airnayden/openbiss.git && cd openbiss
 
 make build-darwin        # Intel Mac     → dist/openbiss-darwin-amd64
 make build-darwin-arm    # Apple Silicon → dist/openbiss-darwin-arm64
@@ -140,7 +140,7 @@ sudo install -m 755 dist/openbiss-$(uname -s | tr A-Z a-z)-$(uname -m | sed 's/x
 ### Windows (build manually)
 
 ```powershell
-git clone https://github.com/openbiss/openbiss.git
+git clone https://github.com/airnayden/openbiss.git
 cd openbiss
 make build-windows
 
@@ -349,7 +349,7 @@ The `release.yml` workflow takes over: it builds all four targets, computes SHA-
 
 ## Contributing
 
-Bug reports and pull requests are welcome at [github.com/openbiss/openbiss/issues](https://github.com/openbiss/openbiss/issues). The CI matrix above must stay green for any merge to `main`.
+Bug reports and pull requests are welcome at [github.com/airnayden/openbiss/issues](https://github.com/airnayden/openbiss/issues). The CI matrix above must stay green for any merge to `main`.
 
 ## License
 

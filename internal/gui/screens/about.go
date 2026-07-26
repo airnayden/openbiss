@@ -6,8 +6,8 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/openbiss/openbiss/assets"
-	"github.com/openbiss/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/assets"
+	"github.com/airnayden/openbiss/internal/i18n"
 )
 
 const (

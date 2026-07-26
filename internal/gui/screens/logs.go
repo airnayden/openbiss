@@ -9,8 +9,8 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/openbiss/openbiss/internal/i18n"
-	"github.com/openbiss/openbiss/internal/logging"
+	"github.com/airnayden/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/logging"
 )
 
 // NewLogScreen returns the Logs tab: a live tail of the slog ring buffer

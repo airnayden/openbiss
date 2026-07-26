@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/openbiss/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/i18n"
 )
 
 // NewNative returns the OS-native DialogProvider for Linux (zenity/kdialog-based).

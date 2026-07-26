@@ -5,9 +5,9 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 
-	"github.com/openbiss/openbiss/internal/config"
-	"github.com/openbiss/openbiss/internal/gui/screens"
-	"github.com/openbiss/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/config"
+	"github.com/airnayden/openbiss/internal/gui/screens"
+	"github.com/airnayden/openbiss/internal/i18n"
 )
 
 var defaultWindowSize = fyne.NewSize(800, 600)

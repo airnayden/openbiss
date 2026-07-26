@@ -1,4 +1,4 @@
-module github.com/openbiss/openbiss
+module github.com/airnayden/openbiss
 
 go 1.22
 

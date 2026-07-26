@@ -9,9 +9,9 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/openbiss/openbiss/internal/autostart"
-	"github.com/openbiss/openbiss/internal/config"
-	"github.com/openbiss/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/autostart"
+	"github.com/airnayden/openbiss/internal/config"
+	"github.com/airnayden/openbiss/internal/i18n"
 )
 
 // autostartAppName is the canonical name passed to autostart.Manager so

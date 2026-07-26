@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/openbiss/openbiss/internal/server/openapi"
+	"github.com/airnayden/openbiss/internal/server/openapi"
 )
 
 func main() {

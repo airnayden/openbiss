@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strings"
 
-	bisscrpyto "github.com/openbiss/openbiss/internal/crypto"
-	"github.com/openbiss/openbiss/internal/i18n"
-	"github.com/openbiss/openbiss/internal/pkcs11"
+	bisscrpyto "github.com/airnayden/openbiss/internal/crypto"
+	"github.com/airnayden/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/pkcs11"
 )
 
 // ---- BISS-compatible request/response types ----

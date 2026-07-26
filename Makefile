@@ -1,5 +1,5 @@
 BINARY    := openbiss
-MODULE    := github.com/openbiss/openbiss
+MODULE    := github.com/airnayden/openbiss
 VERSION   := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 LDFLAGS   := -ldflags "-s -w -X $(MODULE)/internal/config.Version=$(VERSION)"
 # PKG_LDFLAGS: raw linker flags (no outer `-ldflags "..."` wrapper) for fyne-cross.

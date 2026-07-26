@@ -10,7 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/openbiss/openbiss/internal/config"
+	"github.com/airnayden/openbiss/internal/config"
 )
 
 const (

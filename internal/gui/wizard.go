@@ -10,8 +10,8 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/openbiss/openbiss/internal/i18n"
-	"github.com/openbiss/openbiss/internal/pkcs11"
+	"github.com/airnayden/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/pkcs11"
 )
 
 var wizardSize = fyne.NewSize(480, 320)

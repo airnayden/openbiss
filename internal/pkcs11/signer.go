@@ -8,7 +8,7 @@ import (
 
 	p11 "github.com/miekg/pkcs11"
 
-	"github.com/openbiss/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/i18n"
 )
 
 // ErrPrivKeyNotFound is returned when no CKO_PRIVATE_KEY matching the

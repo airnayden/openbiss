@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/openbiss/openbiss/internal/server"
+	"github.com/airnayden/openbiss/internal/server"
 )
 
 func mkRec(t time.Time, path string) server.RequestRecord {

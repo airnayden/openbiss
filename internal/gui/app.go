@@ -17,10 +17,10 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 
-	"github.com/openbiss/openbiss/assets"
-	"github.com/openbiss/openbiss/internal/config"
-	"github.com/openbiss/openbiss/internal/logging"
-	"github.com/openbiss/openbiss/internal/server"
+	"github.com/airnayden/openbiss/assets"
+	"github.com/airnayden/openbiss/internal/config"
+	"github.com/airnayden/openbiss/internal/logging"
+	"github.com/airnayden/openbiss/internal/server"
 )
 
 // AppID is the canonical Fyne app ID (reverse-DNS bundle identifier) used

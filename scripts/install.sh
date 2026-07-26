@@ -4,7 +4,7 @@
 # a launchd service on macOS or a systemd user service on Linux.
 set -euo pipefail
 
-REPO="openbiss/openbiss"
+REPO="airnayden/openbiss"
 INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="openbiss"
 

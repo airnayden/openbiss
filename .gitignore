@@ -20,3 +20,7 @@ openbiss.exe
 # Generated icon containers (produced by `fyne package` from assets/icon.png)
 assets/*.icns
 assets/*.ico
+
+# Local agent/tooling working directories (plans, evidence, notepads)
+.sisyphus/
+.omo/

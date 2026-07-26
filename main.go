@@ -24,14 +24,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/openbiss/openbiss/internal/config"
-	"github.com/openbiss/openbiss/internal/gui"
-	"github.com/openbiss/openbiss/internal/i18n"
-	"github.com/openbiss/openbiss/internal/instance"
-	"github.com/openbiss/openbiss/internal/logging"
-	"github.com/openbiss/openbiss/internal/server"
-	"github.com/openbiss/openbiss/internal/ui"
-	uifyne "github.com/openbiss/openbiss/internal/ui/fyne"
+	"github.com/airnayden/openbiss/internal/config"
+	"github.com/airnayden/openbiss/internal/gui"
+	"github.com/airnayden/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/instance"
+	"github.com/airnayden/openbiss/internal/logging"
+	"github.com/airnayden/openbiss/internal/server"
+	"github.com/airnayden/openbiss/internal/ui"
+	uifyne "github.com/airnayden/openbiss/internal/ui/fyne"
 )
 
 func main() {

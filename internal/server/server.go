@@ -15,12 +15,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/openbiss/openbiss/internal/config"
-	"github.com/openbiss/openbiss/internal/i18n"
-	"github.com/openbiss/openbiss/internal/pkcs11"
-	"github.com/openbiss/openbiss/internal/server/openapi"
-	loctls "github.com/openbiss/openbiss/internal/tls"
-	ui "github.com/openbiss/openbiss/internal/ui"
+	"github.com/airnayden/openbiss/internal/config"
+	"github.com/airnayden/openbiss/internal/i18n"
+	"github.com/airnayden/openbiss/internal/pkcs11"
+	"github.com/airnayden/openbiss/internal/server/openapi"
+	loctls "github.com/airnayden/openbiss/internal/tls"
+	ui "github.com/airnayden/openbiss/internal/ui"
 )
 
 // ServerState represents the lifecycle state of the Server.
