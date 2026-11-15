@@ -332,7 +332,7 @@ The matrix covers four targets:
 | Runner | GOOS / GOARCH | Artifact |
 |---|---|---|
 | `ubuntu-latest` | `linux/amd64` | `openbiss-linux-amd64` |
-| `macos-13` | `darwin/amd64` | `openbiss-darwin-amd64` |
+| `macos-15-intel` | `darwin/amd64` | `openbiss-darwin-amd64` |
 | `macos-latest` | `darwin/arm64` | `openbiss-darwin-arm64` |
 | `windows-latest` | `windows/amd64` | `openbiss-windows-amd64.exe` |
 
